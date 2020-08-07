@@ -2,7 +2,7 @@ package pathfinder;
 
 import java.util.ArrayList;
 
-public class Astar implements Algorithm{
+public class Dijkstra implements Algorithm {
     @Override
     public ArrayList<Node> start(int grid[][], int startX, int startY, int endX, int endY) {
         
@@ -24,7 +24,7 @@ public class Astar implements Algorithm{
             //Get current node
             current = open.get(0);
             for(Node i: open) {
-                if(current.getF() > i.getF()) 
+                if(current.getG() > i.getG()) 
                     current = i;
             }
             
@@ -65,9 +65,8 @@ public class Astar implements Algorithm{
                         }
                     }
                     
-                    //Set H cost and parent node
+                    //Set parent node
                     if(!flag) {
-                        i.setH(getStraightDist(i, endX, endY));
                         i.setParent(current);
                         open.add(i);
                     }
@@ -103,7 +102,6 @@ public class Astar implements Algorithm{
                 }
             }
         }
-        
         return neighbours;
     }
 }
