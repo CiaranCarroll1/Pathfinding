@@ -4,21 +4,17 @@ import java.util.ArrayList;
 
 public class Astar {
     public static void start(int grid[][], int startX, int startY, int endX, int endY) {
-        int cols = 10;
-        int rows = 10;
-        
-        
+ 
         Node start_node = new Node(startX, startY);
         Node end_node = new Node(endX, endY);
-        Node current = start_node;
         ArrayList<Node> open = new ArrayList();
         ArrayList<Node> closed = new ArrayList();
         open.add(start_node);
+        Node current = start_node;
         
         boolean pathfound = false;
-        boolean pathimpossible = false;
         
-        while(!pathfound && !pathimpossible) {
+        while(!pathfound && !open.isEmpty()) {
             current = open.get(0);
             for(Node i: open) {
                 if(current.getF() > i.getF()) 
@@ -32,27 +28,28 @@ public class Astar {
                 pathfound = true;
             }
             else {
-                ArrayList<Node> neighbours = getNeighbours(current, cols, rows);
+                ArrayList<Node> neighbours = getNeighbours(current, grid);
+                boolean flag = false;
                 for(Node i: neighbours) {
-                    boolean flag = false;
-                    for(Node y: closed) {
-                        if(i.equals(y))
+                    flag = false;
+                    for(Node j: closed) {
+                        if(i.equals(j))
                             flag = true;
+                            break;
                     }
 
                     if(!flag) {
-                        for(Node j: open) {
-                            if(i.equals(j) && (j.getG() > (current.getG() + getStraightDist(current, i.getX(), i.getY())))) {
-                                j.setG(current.getG() + getStraightDist(current, i.getX(), i.getY()));
-                                j.setH(getStraightDist(i, endX, endY));
-                                j.setParent(current);
+                        for(Node h: open) {
+                            if(i.equals(h) && (h.getG() > i.getG())) {
+                                h.setH(getStraightDist(i, endX, endY));
+                                h.setParent(current);
                                 flag = true;
+                                break;
                             }
                         }
                     }
                     
                     if(!flag) {
-                        i.setG(current.getG() + getStraightDist(current, i.getX(), i.getY()));
                         i.setH(getStraightDist(i, endX, endY));
                         i.setParent(current);
                         open.add(i);
@@ -62,10 +59,10 @@ public class Astar {
         }
 
         for(Node j: closed)
-            grid[j.getX()][j.getY()] = 1;
+            grid[j.getX()][j.getY()] = 9;
 
-        for(int x = 0; x < cols; x++) {
-            for(int y = 0; y < rows; y++)
+        for(int x = 0; x < grid.length; x++) {
+            for(int y = 0; y < grid[0].length; y++)
                 System.out.print(grid[x][y]);
             System.out.println();
         }
@@ -77,7 +74,9 @@ public class Astar {
         return Math.sqrt((xdif*xdif)+(ydif*ydif));
     }
     
-    public static ArrayList<Node> getNeighbours(Node current, int cols, int rows) {
+    public static ArrayList<Node> getNeighbours(Node current, int grid[][]) {
+        int cols = grid.length;
+        int rows = grid[0].length;
         ArrayList<Node> neighbours = new ArrayList();
         int x = current.getX();
         int y = current.getY();
@@ -86,8 +85,9 @@ public class Astar {
             for(int b = -1; b <= 1; b++) {
                 int xbound = x + a;
                 int ybound = y + b;
-                if((xbound > -1 && xbound < cols) && (ybound > -1 && ybound < rows) && !(xbound == x && ybound == y)) {	//Not outside grid or current
+                if((xbound > -1 && xbound < cols) && (ybound > -1 && ybound < rows) && !(xbound == x && ybound == y) && grid[xbound][ybound] != 1) {	//Not outside grid or current
                         Node neighbour = new Node(xbound, ybound);
+                        neighbour.setG(current.getG() + getStraightDist(current, xbound, ybound));
                         neighbours.add(neighbour);
                 }
             }
