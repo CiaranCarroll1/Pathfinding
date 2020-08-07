@@ -1,0 +1,6 @@
+
+*.xml
+*.mf
+*.properties
+JavaPathfinder/build/classes/.netbeans_automatic_build
+JavaPathfinder/build/classes/.netbeans_update_resources
