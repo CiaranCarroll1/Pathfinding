@@ -3,29 +3,41 @@ package pathfinder;
 import java.util.ArrayList;
 
 public class Astar {
-    public static void start(int grid[][], int startX, int startY, int endX, int endY) {
- 
+    public static ArrayList<Node> start(int grid[][], int startX, int startY, int endX, int endY) {
+        
+        // Create start and end node
         Node start_node = new Node(startX, startY);
         Node end_node = new Node(endX, endY);
+        
+        //Initialize open,closed and path lists
         ArrayList<Node> open = new ArrayList();
         ArrayList<Node> closed = new ArrayList();
+        ArrayList<Node> path = new ArrayList();
+        
+        //Add start node to open
         open.add(start_node);
         Node current = start_node;
         
-        boolean pathfound = false;
-        
-        while(!pathfound && !open.isEmpty()) {
+        //Loop until end is found
+        while(!open.isEmpty()) {
+            //Get current node
             current = open.get(0);
             for(Node i: open) {
                 if(current.getF() > i.getF()) 
                     current = i;
             }
             
+            //Remove current from open and add to closed
             open.remove(current);
             closed.add(current);
             
+            //Found goal node
             if(current.equals(end_node)) {
-                pathfound = true;
+                while(current != null) {
+                    path.add(current);
+                    current = current.getParent();
+                }
+                return path;
             }
             else {
                 ArrayList<Node> neighbours = getNeighbours(current, grid);
@@ -33,16 +45,15 @@ public class Astar {
                 for(Node i: neighbours) {
                     flag = false;
                     for(Node j: closed) {
-                        if(i.equals(j))
+                        if(i.equals(j)) {
                             flag = true;
                             break;
+                        }
                     }
 
                     if(!flag) {
                         for(Node h: open) {
-                            if(i.equals(h) && (h.getG() > i.getG())) {
-                                h.setH(getStraightDist(i, endX, endY));
-                                h.setParent(current);
+                            if(i.equals(h) && (i.getG() > h.getG())) {
                                 flag = true;
                                 break;
                             }
@@ -57,15 +68,7 @@ public class Astar {
                 }
             }
         }
-
-        for(Node j: closed)
-            grid[j.getX()][j.getY()] = 9;
-
-        for(int x = 0; x < grid.length; x++) {
-            for(int y = 0; y < grid[0].length; y++)
-                System.out.print(grid[x][y]);
-            System.out.println();
-        }
+        return path;
     }
     
     public static double getStraightDist(Node current, int goalX, int goalY) {
