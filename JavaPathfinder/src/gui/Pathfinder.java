@@ -65,8 +65,7 @@ public class Pathfinder extends Application {
         {
             if(startX > -1 && endX > -1 && !startSearch) {
                 startSearch = true;
-                if(astar.isSelected())
-                    runAstar();
+                runAlgo();
             }
         });
         reset = new Button("Reset Grid!");
@@ -137,12 +136,8 @@ public class Pathfinder extends Application {
         }
     }
     
-    //A star search algorithm
-    public void runAstar() {
-        
-        // Create start and end Tile
-//        Tile start_Tile = grid[startX][startY];
-//        Tile end_Tile = grid[endX][endY];
+    //Run search algorithm
+    public void runAlgo() {
 
         Tile start_Tile = new Tile(startX, startY);
         Tile end_Tile = new Tile(endX, endY);
@@ -159,9 +154,18 @@ public class Pathfinder extends Application {
         while(!open.isEmpty()) {
             //Get current Tile
             current = open.get(0);
-            for(Tile i: open) {
-                if(current.getF() > i.getF()) 
-                    current = i;
+            
+            if(astar.isSelected()) {
+                for(Tile i: open) {
+                    if(current.getF() > i.getF()) 
+                        current = i;
+                }
+            }
+            else {
+                for(Tile i: open) {
+                    if(current.getG() > i.getG()) 
+                        current = i;
+                }
             }
             
             //Remove current from open and add to closed
@@ -207,9 +211,11 @@ public class Pathfinder extends Application {
 
                 //Set H cost and parent Tile
                 if(!flag) {
-                    int xdif = current.getX()-endX;
-                    int ydif = current.getY()-endY;
-                    i.setH(Math.sqrt((xdif*xdif)+(ydif*ydif)));
+                    if(astar.isSelected()) {
+                        int xdif = current.getX()-endX;
+                        int ydif = current.getY()-endY;
+                        i.setH(Math.sqrt((xdif*xdif)+(ydif*ydif)));
+                    }
                     open.add(i);
                 }
             }
