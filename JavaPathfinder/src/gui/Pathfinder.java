@@ -2,6 +2,8 @@ package gui;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -138,8 +140,8 @@ public class Pathfinder extends Application {
                     current = i;
             }
             
-            if(current.getStatus() != 1 && current.getStatus() !=2)
-                grid[current.getX()][current.getY()].setStatus(4);
+//            if(current.getStatus() != 1 && current.getStatus() !=2)
+//                grid[current.getX()][current.getY()].setStatus(5);
             
             //Remove current from open and add to closed
             open.remove(current);
@@ -148,13 +150,13 @@ public class Pathfinder extends Application {
             //Found goal Tile
             if(current.equals(end_Tile)) {
                 System.out.println("Found!");
-//                while(current != null) {
-//
-//                    if(current.getStatus() != 1 && current.getStatus() !=2)
-//                        grid[current.getX()][current.getY()].setStatus(4);
-//
-//                    current = current.getPrev();
-//                }
+                while(current.getStatus() != 1) {
+
+                    if(current.getStatus() !=2)
+                        grid[current.getX()][current.getY()].setStatus(4);
+
+                    current = current.getPrev();
+                }
                 return;
             }
             else {
@@ -190,13 +192,10 @@ public class Pathfinder extends Application {
                     }
                 }
             }
-//            try
-//            {
+//            try {
 //                Thread.sleep(1000);
-//            }
-//            catch(InterruptedException ex)
-//            {
-//                Thread.currentThread().interrupt();
+//            } catch (InterruptedException ex) {
+//                Logger.getLogger(Pathfinder.class.getName()).log(Level.SEVERE, null, ex);
 //            }
         }
         return;

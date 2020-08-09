@@ -7,7 +7,7 @@ import javafx.scene.shape.Rectangle;
 public class Tile extends StackPane {
     int x, y;
     double g, h;
-    int status; // 0 = empty, 1 = start, 2 = end, 3 = wall, 4 = path
+    int status; // 0 = empty, 1 = start, 2 = end, 3 = wall, 4 = path, 5 closed
     Tile parent;
     
     private Rectangle border;
@@ -55,6 +55,8 @@ public class Tile extends StackPane {
             border.setFill(Color.BLACK);
         if(status == 4)
             border.setFill(Color.YELLOW);
+        if(status == 5)
+            border.setFill(Color.ORANGE);
     }
 
     public boolean equals(Tile n) {
