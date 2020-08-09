@@ -1,26 +1,26 @@
 package gui;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import pathfinder.Tile;
 
 public class Pathfinder extends Application {
     
     private static final int TILE_SIZE = 40;
-    private static final int W = 800;
-    private static final int H = 600;
+    private static final int W = 1000;
+    private static final int H = 800;
 
     private static final int X_TILES = W / TILE_SIZE;
     private static final int Y_TILES = H / TILE_SIZE;
@@ -32,32 +32,43 @@ public class Pathfinder extends Application {
     private boolean startSearch = false;
     private Scene scene;
     
+    //Display grid and options
     private Parent createContent() {
         HBox root = new HBox();
         Pane pane = new Pane();
         root.setPrefSize(W, H);
 
+        //Create Tiles
         for (int y = 0; y < Y_TILES; y++) {
             for (int x = 0; x < X_TILES; x++) {
                 Tile tile = new Tile(x, y);
                 tile.setOnMouseClicked(e -> updateTile(tile));
+                tile.setOnDragDetected(e -> {
+                    Dragboard db = tile.startDragAndDrop(TransferMode.ANY);
+                    ClipboardContent content = new ClipboardContent();
+                    content.putString("Wall");
+                    db.setContent(content);
+                    e.consume();
+                 });
+                tile.setOnDragOver(e -> updateTile(tile));
 
                 grid[x][y] = tile;
                 pane.getChildren().add(tile);
             }
         }
         
+        //Create option buttons
         VBox options = new VBox(10);
-        findPath = new Button("Find Path");
-        findPath.setOnAction(event ->
+        findPath = new Button("Find Path!");
+        findPath.setOnAction(e ->
         {
             if(startX > -1 && endX > -1) {
                 startSearch = true;
                 astar();
             }
         });
-        reset = new Button("Reset");
-        reset.setOnAction(event ->
+        reset = new Button("Reset Grid!");
+        reset.setOnAction(e ->
         {
             for (int y = 0; y < Y_TILES; y++) {
                 for (int x = 0; x < X_TILES; x++) {
@@ -74,19 +85,19 @@ public class Pathfinder extends Application {
         });
         
         ToggleGroup toggleGroup = new ToggleGroup();
-        start = new ToggleButton("Start");
+        start = new RadioButton("Start Node");
         start.setToggleGroup(toggleGroup);
-        end = new ToggleButton("End");
+        end = new RadioButton("End Node");
         end.setToggleGroup(toggleGroup);
-        wall = new ToggleButton("Wall");
+        wall = new RadioButton("Wall Node");
         wall.setToggleGroup(toggleGroup);
-        options.getChildren().addAll(findPath,start, end, wall, reset);
+        options.getChildren().addAll(findPath, reset, start, end, wall);
         
         root.getChildren().addAll(options, pane);
         return root;
     }
     
-    // Check if start/end selected
+    // Change tile status
     public void updateTile(Tile tile) {
         if (!startSearch) {
             if(start.isSelected()) {
@@ -116,6 +127,7 @@ public class Pathfinder extends Application {
         }
     }
     
+    //A star search algorithm
     public void astar() {
         
         // Create start and end Tile
@@ -125,7 +137,6 @@ public class Pathfinder extends Application {
         //Initialize open,closed and path lists
         ArrayList<Tile> open = new ArrayList();
         ArrayList<Tile> closed = new ArrayList();
-        ArrayList<Tile> path = new ArrayList();
         
         //Add start Tile to open
         open.add(start_Tile);
@@ -139,9 +150,6 @@ public class Pathfinder extends Application {
                 if(current.getF() > i.getF()) 
                     current = i;
             }
-            
-//            if(current.getStatus() != 1 && current.getStatus() !=2)
-//                grid[current.getX()][current.getY()].setStatus(5);
             
             //Remove current from open and add to closed
             open.remove(current);
@@ -192,13 +200,7 @@ public class Pathfinder extends Application {
                     }
                 }
             }
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException ex) {
-//                Logger.getLogger(Pathfinder.class.getName()).log(Level.SEVERE, null, ex);
-//            }
         }
-        return;
     }
     
     //Get straight line distance to goal Tile

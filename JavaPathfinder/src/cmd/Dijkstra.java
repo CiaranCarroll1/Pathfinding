@@ -1,4 +1,4 @@
-package pathfinder;
+package cmd;
 
 import java.util.ArrayList;
 

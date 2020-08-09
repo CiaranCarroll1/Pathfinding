@@ -1,3 +1,5 @@
+package cmd;
+
 //package pathfinder;
 //
 //import java.util.ArrayList;
