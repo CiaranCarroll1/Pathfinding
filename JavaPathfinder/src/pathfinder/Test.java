@@ -17,9 +17,9 @@
 //                        {0, 0, 0, 0, 0, 0, 0, 1, 0, 0}};
 //        
 //        Algorithm algo = new Astar();
-//        ArrayList<Node> path = algo.start(grid, 4, 4, 9, 9);
+//        ArrayList<Tile> path = algo.start(grid, 4, 4, 9, 9);
 //        
-//        for(Node j: path)
+//        for(Tile j: path)
 //            grid[j.getX()][j.getY()] = 9;
 //
 //        for(int x = 0; x < grid.length; x++) {

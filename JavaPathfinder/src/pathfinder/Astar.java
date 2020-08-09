@@ -4,26 +4,26 @@ import java.util.ArrayList;
 
 public class Astar implements Algorithm{
     @Override
-    public ArrayList<Node> start(int grid[][], int startX, int startY, int endX, int endY) {
+    public ArrayList<Tile> start(int grid[][], int startX, int startY, int endX, int endY) {
         
-        // Create start and end node
-        Node start_node = new Node(startX, startY);
-        Node end_node = new Node(endX, endY);
+        // Create start and end Tile
+        Tile start_Tile = new Tile(startX, startY);
+        Tile end_Tile = new Tile(endX, endY);
         
         //Initialize open,closed and path lists
-        ArrayList<Node> open = new ArrayList();
-        ArrayList<Node> closed = new ArrayList();
-        ArrayList<Node> path = new ArrayList();
+        ArrayList<Tile> open = new ArrayList();
+        ArrayList<Tile> closed = new ArrayList();
+        ArrayList<Tile> path = new ArrayList();
         
-        //Add start node to open
-        open.add(start_node);
-        Node current = start_node;
+        //Add start Tile to open
+        open.add(start_Tile);
+        Tile current = start_Tile;
         
         //Loop until end is found
         while(!open.isEmpty()) {
-            //Get current node
+            //Get current Tile
             current = open.get(0);
-            for(Node i: open) {
+            for(Tile i: open) {
                 if(current.getF() > i.getF()) 
                     current = i;
             }
@@ -32,23 +32,23 @@ public class Astar implements Algorithm{
             open.remove(current);
             closed.add(current);
             
-            //Found goal node
-            if(current.equals(end_node)) {
+            //Found goal Tile
+            if(current.equals(end_Tile)) {
                 while(current != null) {
                     path.add(current);
-                    current = current.getParent();
+                    current = current.getPrev();
                 }
                 return path;
             }
             else {
-                //Get traversable neighbour nodes
-                ArrayList<Node> neighbours = getNeighbours(current, grid);
+                //Get traversable neighbour Tiles
+                ArrayList<Tile> neighbours = getNeighbours(current, grid);
                 boolean flag = false;
-                for(Node i: neighbours) {
+                for(Tile i: neighbours) {
                     flag = false;
                     
                     //Skip to next neighbour if in closed list
-                    for(Node j: closed) {
+                    for(Tile j: closed) {
                         if(i.equals(j)) {
                             flag = true;
                             break;
@@ -57,7 +57,7 @@ public class Astar implements Algorithm{
 
                     //Skip to next neighbour if in open list and neighbour G cost is higher
                     if(!flag) {
-                        for(Node h: open) {
+                        for(Tile h: open) {
                             if(i.equals(h) && (i.getG() > h.getG())) {
                                 flag = true;
                                 break;
@@ -65,10 +65,10 @@ public class Astar implements Algorithm{
                         }
                     }
                     
-                    //Set H cost and parent node
+                    //Set H cost and parent Tile
                     if(!flag) {
                         i.setH(getStraightDist(i, endX, endY));
-                        i.setParent(current);
+                        i.setPrev(current);
                         open.add(i);
                     }
                 }
@@ -77,18 +77,18 @@ public class Astar implements Algorithm{
         return path;
     }
     
-    //Get straight line distance to goal node
-    public static double getStraightDist(Node current, int goalX, int goalY) {
+    //Get straight line distance to goal Tile
+    public static double getStraightDist(Tile current, int goalX, int goalY) {
         int xdif = Math.abs(current.getX()-goalX);
         int ydif = Math.abs(current.getY()-goalY);
         return Math.sqrt((xdif*xdif)+(ydif*ydif));
     }
     
-    //Get traversable neighbour nodes
-    public static ArrayList<Node> getNeighbours(Node current, int grid[][]) {
+    //Get traversable neighbour Tiles
+    public static ArrayList<Tile> getNeighbours(Tile current, int grid[][]) {
         int cols = grid.length;
         int rows = grid[0].length;
-        ArrayList<Node> neighbours = new ArrayList();
+        ArrayList<Tile> neighbours = new ArrayList();
         int x = current.getX();
         int y = current.getY();
         
@@ -97,7 +97,7 @@ public class Astar implements Algorithm{
                 int xbound = x + a;
                 int ybound = y + b;
                 if((xbound > -1 && xbound < cols) && (ybound > -1 && ybound < rows) && !(xbound == x && ybound == y) && grid[xbound][ybound] != 1) {	//Not outside grid or current
-                        Node neighbour = new Node(xbound, ybound);
+                        Tile neighbour = new Tile(xbound, ybound);
                         neighbour.setG(current.getG() + getStraightDist(current, xbound, ybound));
                         neighbours.add(neighbour);
                 }
