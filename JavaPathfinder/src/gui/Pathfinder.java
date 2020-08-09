@@ -5,6 +5,7 @@ import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
@@ -28,7 +29,7 @@ public class Pathfinder extends Application {
     private Tile[][] grid = new Tile[X_TILES][Y_TILES];
     private int startX, startY, endX, endY;
     private Button findPath, reset;
-    private ToggleButton start, end, wall;
+    private ToggleButton astar, dijkstra, start, end, wall;
     private boolean startSearch = false;
     private Scene scene;
     
@@ -39,8 +40,8 @@ public class Pathfinder extends Application {
         root.setPrefSize(W, H);
 
         //Create Tiles
-        for (int y = 0; y < Y_TILES; y++) {
-            for (int x = 0; x < X_TILES; x++) {
+        for (int x = 0; x < X_TILES; x++) {
+            for (int y = 0; y < Y_TILES; y++) {
                 Tile tile = new Tile(x, y);
                 tile.setOnMouseClicked(e -> updateTile(tile));
                 tile.setOnDragDetected(e -> {
@@ -62,18 +63,18 @@ public class Pathfinder extends Application {
         findPath = new Button("Find Path!");
         findPath.setOnAction(e ->
         {
-            if(startX > -1 && endX > -1) {
+            if(startX > -1 && endX > -1 && !startSearch) {
                 startSearch = true;
-                astar();
+                if(astar.isSelected())
+                    runAstar();
             }
         });
         reset = new Button("Reset Grid!");
         reset.setOnAction(e ->
         {
-            for (int y = 0; y < Y_TILES; y++) {
-                for (int x = 0; x < X_TILES; x++) {
-                    Tile tile = grid[x][y];
-                    tile.setStatus(0);
+            for (int x = 0; x < X_TILES; x++) {
+                for (int y = 0; y < Y_TILES; y++) {
+                    grid[x][y].setStatus(0);
                 }
             }
             
@@ -84,14 +85,23 @@ public class Pathfinder extends Application {
             startSearch = false;
         });
         
-        ToggleGroup toggleGroup = new ToggleGroup();
+        Label algoOptions = new Label("Algorithm:");
+        ToggleGroup algoGroup = new ToggleGroup();
+        astar = new RadioButton("A*");
+        astar.setSelected(true);
+        astar.setToggleGroup(algoGroup);
+        dijkstra = new RadioButton("Dijkstra");
+        dijkstra.setToggleGroup(algoGroup);
+        
+        Label tileOptions = new Label("Add Tile:");
+        ToggleGroup tileGroup = new ToggleGroup();
         start = new RadioButton("Start Node");
-        start.setToggleGroup(toggleGroup);
+        start.setToggleGroup(tileGroup);
         end = new RadioButton("End Node");
-        end.setToggleGroup(toggleGroup);
+        end.setToggleGroup(tileGroup);
         wall = new RadioButton("Wall Node");
-        wall.setToggleGroup(toggleGroup);
-        options.getChildren().addAll(findPath, reset, start, end, wall);
+        wall.setToggleGroup(tileGroup);
+        options.getChildren().addAll(findPath, algoOptions, astar, dijkstra, tileOptions, start, end, wall, reset);
         
         root.getChildren().addAll(options, pane);
         return root;
@@ -105,9 +115,9 @@ public class Pathfinder extends Application {
                     grid[startX][startY].setStatus(0);
                 }
 
-                tile.setStatus(1);
                 startX = tile.getX();
                 startY = tile.getY();
+                grid[startX][startY].setStatus(1);
             }
 
             if(end.isSelected()) {
@@ -115,24 +125,27 @@ public class Pathfinder extends Application {
                     grid[endX][endY].setStatus(0);
                 }
 
-                tile.setStatus(2);
                 endX = tile.getX();
                 endY = tile.getY();
+                grid[endX][endY].setStatus(2);
             }
 
             int status = tile.getStatus();
             if(wall.isSelected() && status != 1 && status != 2) {
-                tile.setStatus(3);
+                grid[tile.getX()][tile.getY()].setStatus(3);
             }
         }
     }
     
     //A star search algorithm
-    public void astar() {
+    public void runAstar() {
         
         // Create start and end Tile
-        Tile start_Tile = grid[startX][startY];
-        Tile end_Tile = grid[endX][endY];
+//        Tile start_Tile = grid[startX][startY];
+//        Tile end_Tile = grid[endX][endY];
+
+        Tile start_Tile = new Tile(startX, startY);
+        Tile end_Tile = new Tile(endX, endY);
         
         //Initialize open,closed and path lists
         ArrayList<Tile> open = new ArrayList();
@@ -157,85 +170,81 @@ public class Pathfinder extends Application {
             
             //Found goal Tile
             if(current.equals(end_Tile)) {
-                System.out.println("Found!");
-                while(current.getStatus() != 1) {
-
-                    if(current.getStatus() !=2)
+                while(grid[current.getX()][current.getY()].getStatus() != 1) {
+                    if(grid[current.getX()][current.getY()].getStatus() !=2) {
                         grid[current.getX()][current.getY()].setStatus(4);
+                    }
 
                     current = current.getPrev();
                 }
                 return;
             }
-            else {
-                //Get traversable neighbour Tiles
-                ArrayList<Tile> neighbours = getNeighbours(current);
-                boolean flag = false;
-                for(Tile i: neighbours) {
-                    flag = false;
-                    
-                    //Skip to next neighbour if in closed list
-                    for(Tile j: closed) {
-                        if(i.equals(j)) {
+
+            //Get traversable neighbour Tiles
+            ArrayList<Tile> neighbours = getNeighbours(current);
+            
+            boolean flag;
+            for(Tile i: neighbours) {
+                flag = false;
+
+                //Skip to next neighbour if in closed list
+                for(Tile j: closed) {
+                    if(i.equals(j)) {
+                        flag = true;
+                        break;
+                    }
+                }
+                
+                //Skip to next neighbour if in open list and neighbour G cost is higher
+                if(!flag) {
+                    for(Tile h: open) {
+                        if(i.equals(h) && (i.getG() > h.getG())) {
                             flag = true;
                             break;
                         }
                     }
+                }
 
-                    //Skip to next neighbour if in open list and neighbour G cost is higher
-                    if(!flag) {
-                        for(Tile h: open) {
-                            if(i.equals(h) && (i.getG() > h.getG())) {
-                                flag = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    //Set H cost and parent Tile
-                    if(!flag) {
-                        i.setH(getStraightDist(i, endX, endY));
-                        i.setPrev(current);
-                        open.add(i);
-                    }
+                //Set H cost and parent Tile
+                if(!flag) {
+                    int xdif = current.getX()-endX;
+                    int ydif = current.getY()-endY;
+                    i.setH(Math.sqrt((xdif*xdif)+(ydif*ydif)));
+                    open.add(i);
                 }
             }
         }
     }
     
-    //Get straight line distance to goal Tile
-    public double getStraightDist(Tile current, int goalX, int goalY) {
-        int xdif = Math.abs(current.getX()-goalX);
-        int ydif = Math.abs(current.getY()-goalY);
-        return Math.sqrt((xdif*xdif)+(ydif*ydif));
-    }
-    
-    //Get traversable neighbour Tiles
     public ArrayList<Tile> getNeighbours(Tile current) {
         ArrayList<Tile> neighbours = new ArrayList();
         int x = current.getX();
         int y = current.getY();
-        
+
         for(int a = -1; a <= 1; a++) {
             for(int b = -1; b <= 1; b++) {
                 int xbound = x + a;
                 int ybound = y + b;
-                if((xbound > -1 && xbound < X_TILES) && (ybound > -1 && ybound < Y_TILES) && !(xbound == x && ybound == y)) {	//Not outside grid or current
-                    Tile neighbour = grid[xbound][ybound];
-                    if(neighbour.getStatus() != 3) {
-                        neighbour.setG(current.getG() + getStraightDist(current, xbound, ybound));
-                        neighbours.add(grid[xbound][ybound]);
+                if((xbound > -1 && xbound < X_TILES) && (ybound > -1 && ybound < Y_TILES) && !(xbound == x && ybound == y)) {
+                    Tile neighbour = new Tile(xbound, ybound);
+                    if(grid[xbound][ybound].getStatus() != 3) {
+                        if(a * b == 0)
+                            neighbour.setG(current.getG() + 1);
+                        else
+                            neighbour.setG(current.getG() + 1.4);
+
+                        neighbour.setPrev(current);
+                        neighbours.add(neighbour);
                     }
                 }
             }
         }
-        
         return neighbours;
     }
     
     @Override
     public void start(Stage stage) throws Exception {
-        scene = new Scene(createContent());
+        scene = new Scene(createContent(), W + 200, H);
         stage.setTitle("Pathfinder");
         stage.setScene(scene);
         stage.show();
