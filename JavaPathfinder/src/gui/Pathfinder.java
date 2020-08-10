@@ -2,6 +2,9 @@ package gui;
 
 import java.util.ArrayList;
 import javafx.application.Application;
+import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -26,7 +29,7 @@ public class Pathfinder extends Application {
     private static final int X_TILES = W / TILE_SIZE;
     private static final int Y_TILES = H / TILE_SIZE;
 
-    private Tile[][] grid = new Tile[X_TILES][Y_TILES];
+    private final Tile[][] grid = new Tile[X_TILES][Y_TILES];
     private int startX, startY, endX, endY;
     private Button findPath, reset;
     private ToggleButton astar, dijkstra, start, end, wall;
@@ -175,10 +178,11 @@ public class Pathfinder extends Application {
             //Found goal Tile
             if(current.equals(end_Tile)) {
                 while(grid[current.getX()][current.getY()].getStatus() != 1) {
-                    if(grid[current.getX()][current.getY()].getStatus() !=2) {
-                        grid[current.getX()][current.getY()].setStatus(4);
-                    }
-
+                    int x = current.getX();
+                    int y = current.getY();
+                    int status = grid[x][y].getStatus();
+                    if(status !=2) 
+                        grid[x][y].setStatus(4);
                     current = current.getPrev();
                 }
                 return;
