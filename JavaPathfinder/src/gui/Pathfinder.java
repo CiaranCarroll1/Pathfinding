@@ -2,9 +2,6 @@ package gui;
 
 import java.util.ArrayList;
 import javafx.application.Application;
-import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -32,8 +29,8 @@ public class Pathfinder extends Application {
     private final Tile[][] grid = new Tile[X_TILES][Y_TILES];
     private int startX, startY, endX, endY;
     private Button findPath, reset;
-    private ToggleButton astar, dijkstra, start, end, wall;
-    private boolean startSearch = false;
+    private ToggleButton astar, dijkstra, manhat, euclid, start, end, wall;
+    private boolean searching = false;
     private Scene scene;
     
     //Display grid and options
@@ -66,9 +63,16 @@ public class Pathfinder extends Application {
         findPath = new Button("Find Path!");
         findPath.setOnAction(e ->
         {
-            if(startX > -1 && endX > -1 && !startSearch) {
-                startSearch = true;
+            for (int x = 0; x < X_TILES; x++) {
+                for (int y = 0; y < Y_TILES; y++) {
+                    if(grid[x][y].getStatus() > 3)
+                        grid[x][y].setStatus(0);
+                }
+            }
+            if(startX > -1 && endX > -1 && !searching) {
+                searching = true;
                 runAlgo();
+                searching = false;
             }
         });
         reset = new Button("Reset Grid!");
@@ -84,7 +88,6 @@ public class Pathfinder extends Application {
             startY = -1;
             endX = -1;
             endY = -1;
-            startSearch = false;
         });
         
         Label algoOptions = new Label("Algorithm:");
@@ -95,6 +98,14 @@ public class Pathfinder extends Application {
         dijkstra = new RadioButton("Dijkstra");
         dijkstra.setToggleGroup(algoGroup);
         
+        Label heuristicOptions = new Label("Heuristic:");
+        ToggleGroup heuristicGroup = new ToggleGroup();
+        euclid = new RadioButton("Euclidian");
+        euclid.setSelected(true);
+        euclid.setToggleGroup(heuristicGroup);
+        manhat = new RadioButton("Manhattan");
+        manhat.setToggleGroup(heuristicGroup);
+        
         Label tileOptions = new Label("Add Tile:");
         ToggleGroup tileGroup = new ToggleGroup();
         start = new RadioButton("Start Node");
@@ -103,7 +114,7 @@ public class Pathfinder extends Application {
         end.setToggleGroup(tileGroup);
         wall = new RadioButton("Wall Node");
         wall.setToggleGroup(tileGroup);
-        options.getChildren().addAll(findPath, algoOptions, astar, dijkstra, tileOptions, start, end, wall, reset);
+        options.getChildren().addAll(findPath, algoOptions, astar, dijkstra, heuristicOptions, euclid, manhat, tileOptions, start, end, wall, reset);
         
         root.getChildren().addAll(options, pane);
         return root;
@@ -111,7 +122,7 @@ public class Pathfinder extends Application {
     
     // Change tile status
     public void updateTile(Tile tile) {
-        if (!startSearch) {
+        if (!searching) {
             if(start.isSelected()) {
                 if(startX != -1) {
                     grid[startX][startY].setStatus(0);
@@ -216,14 +227,28 @@ public class Pathfinder extends Application {
                 //Set H cost and parent Tile
                 if(!flag) {
                     if(astar.isSelected()) {
-                        int xdif = current.getX()-endX;
-                        int ydif = current.getY()-endY;
-                        i.setH(Math.sqrt((xdif*xdif)+(ydif*ydif)));
+                        if(euclid.isSelected())
+                            i.setH(getEuclidDistance(current));
+                        
+                        if(manhat.isSelected())
+                            i.setH(getManhattanDistance(current));
                     }
                     open.add(i);
                 }
             }
         }
+    }
+    
+    public double getManhattanDistance(Tile current) {
+        int xdif = Math.abs(current.getX()-endX);
+        int ydif = Math.abs(current.getY()-endY);
+        return (xdif + ydif);
+    }
+    
+    public double getEuclidDistance(Tile current) {
+        int xdif = current.getX()-endX;
+        int ydif = current.getY()-endY;
+        return Math.sqrt((xdif*xdif)+(ydif*ydif));
     }
     
     public ArrayList<Tile> getNeighbours(Tile current) {
