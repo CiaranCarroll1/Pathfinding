@@ -29,7 +29,7 @@ public class Pathfinder extends Application {
     private final Tile[][] grid = new Tile[X_TILES][Y_TILES];
     private int startX, startY, endX, endY;
     private Button findPath, reset;
-    private ToggleButton astar, dijkstra, manhat, euclid, start, end, wall;
+    private ToggleButton astar, dijkstra, manhat, euclid, diag, nodiag, start, end, wall;
     private boolean searching = false;
     private Scene scene;
     
@@ -90,7 +90,6 @@ public class Pathfinder extends Application {
             endY = -1;
         });
         
-        Label algoOptions = new Label("Algorithm:");
         ToggleGroup algoGroup = new ToggleGroup();
         astar = new RadioButton("A*");
         astar.setSelected(true);
@@ -98,7 +97,6 @@ public class Pathfinder extends Application {
         dijkstra = new RadioButton("Dijkstra");
         dijkstra.setToggleGroup(algoGroup);
         
-        Label heuristicOptions = new Label("Heuristic:");
         ToggleGroup heuristicGroup = new ToggleGroup();
         euclid = new RadioButton("Euclidian");
         euclid.setSelected(true);
@@ -106,7 +104,13 @@ public class Pathfinder extends Application {
         manhat = new RadioButton("Manhattan");
         manhat.setToggleGroup(heuristicGroup);
         
-        Label tileOptions = new Label("Add Tile:");
+        ToggleGroup diagonalGroup = new ToggleGroup();
+        diag = new RadioButton("Yes");
+        diag.setSelected(true);
+        diag.setToggleGroup(diagonalGroup);
+        nodiag = new RadioButton("No");
+        nodiag.setToggleGroup(diagonalGroup);
+        
         ToggleGroup tileGroup = new ToggleGroup();
         start = new RadioButton("Start Node");
         start.setToggleGroup(tileGroup);
@@ -114,7 +118,12 @@ public class Pathfinder extends Application {
         end.setToggleGroup(tileGroup);
         wall = new RadioButton("Wall Node");
         wall.setToggleGroup(tileGroup);
-        options.getChildren().addAll(findPath, algoOptions, astar, dijkstra, heuristicOptions, euclid, manhat, tileOptions, start, end, wall, reset);
+        options.getChildren().addAll(findPath, 
+                                    new Label("Algorithm:"), astar, dijkstra, 
+                                    new Label("Heuristic:"), euclid, manhat,
+                                    new Label("Diagonal?"), diag, nodiag,
+                                    new Label("Add Tile:"), start, end, wall, 
+                                    reset);
         
         root.getChildren().addAll(options, pane);
         return root;
@@ -200,7 +209,11 @@ public class Pathfinder extends Application {
             }
 
             //Get traversable neighbour Tiles
-            ArrayList<Tile> neighbours = getNeighbours(current);
+            ArrayList<Tile> neighbours;
+            if(diag.isSelected())
+                neighbours = getDiagonalNeighbours(current);
+            else
+                neighbours = getNeighbours(current);
             
             boolean flag;
             for(Tile i: neighbours) {
@@ -252,6 +265,27 @@ public class Pathfinder extends Application {
     }
     
     public ArrayList<Tile> getNeighbours(Tile current) {
+        int[][] options = {{0,1},{1,0},{0,-1},{-1,0}};
+        ArrayList<Tile> neighbours = new ArrayList();
+        int x = current.getX();
+        int y = current.getY();
+
+        for(int i = 0; i < options.length; i++) {
+            int xbound = x + options[i][0];
+            int ybound = y + options[i][1];
+            if((xbound > -1 && xbound < X_TILES) && (ybound > -1 && ybound < Y_TILES) && !(xbound == x && ybound == y)) {
+                Tile neighbour = new Tile(xbound, ybound);
+                if(grid[xbound][ybound].getStatus() != 3) {
+                    neighbour.setG(current.getG() + 1);
+                    neighbour.setPrev(current);
+                    neighbours.add(neighbour);
+                }
+            }
+        }
+        return neighbours;
+    }
+    
+    public ArrayList<Tile> getDiagonalNeighbours(Tile current) {
         ArrayList<Tile> neighbours = new ArrayList();
         int x = current.getX();
         int y = current.getY();
